@@ -15,6 +15,16 @@ Course:         2021/2022
 
 ## Content
 
+* [Data collection and preprocessing](#data-collection-and-preprocessing)
+* [Position Weight Matrices (PWMs) degron motifs](#position-weight-matrices-pwms-degron-motifs)
+* [PWM scan](#pwm-scan)
+* [PWM positivity threshold, information content, specificity and discovery activity](#pwm-positivity-threshold-information-content-specificity-and-discovery-activity)
+* [PWM iterative enrichment](#pwm-iterative-enrichment)
+* [De novo degron identification](#de-novo-degron-identification)
+* [Mutations in the last exon](#mutations-in-the-last-exon)
+* [Mutation annotation in the discovered degrons](#mutation-annotation-in-the-discovered-degrons)
+* [Data analysis](#data-analysis)
+
 ## Data collection and preprocessing
 
 ### 1. UbiNet Position Probability Matrices (PPMs)
