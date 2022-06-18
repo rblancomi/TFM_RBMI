@@ -8,6 +8,7 @@ from scipy import stats
 def process_muttype_df(muttype_df, cols_for_drop, cond, check_normality = True, for_one_degron = False):
     
     if for_one_degron:
+        muttype_df = muttype_df.drop_duplicates(subset = cols_for_drop)
         muttype_df["Condition"] = cond
         # may need to add drop duplicates here too
         if check_normality:

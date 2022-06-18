@@ -200,7 +200,7 @@ def barplot_broken_axis_qa_property(qa_df, property, ylab_property, y_lim_high, 
 
     return ax1,ax2
 
-def violinplot_pos_threshold(pwm, pos_set, nopos_scan, E3, proteome, plot_file, n_samples = 100, negatives_to_zero = False, 
+def violinplot_pos_threshold(pwm, pos_set, nopos_scan, qa_df, E3, proteome, plot_file, n_samples = 100, negatives_to_zero = False, 
                             fig_width = 5, fig_height = 10):
     
     # Calculate scores of positive set
@@ -245,6 +245,11 @@ def violinplot_pos_threshold(pwm, pos_set, nopos_scan, E3, proteome, plot_file, 
     plt.xlabel("")
     plt.yticks(fontsize = 15)
     plt.title(E3, size = 18, pad = 10)
+
+    # Plot positivity threshold
+    pos_scores = [s for s in pos_set_scores_df.Score.values.tolist() if s >= 0]
+    pos_threshold = min(pos_scores)
+    plt.axhline(y = pos_threshold, color = 'r', linestyle = '--', alpha = 0.5)
 
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
     
