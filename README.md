@@ -1,6 +1,6 @@
 # Final Master Project
 
-**Master in Bioinformatics and Computational Biology, Universidad Autónooma de Madrid (UAM)**\
+**Master in Bioinformatics and Computational Biology, Universidad Autónoma de Madrid (UAM)**\
 **Barcelona Biomedical Genomics Lab (BBGLab) https://bbglab.irbbarcelona.org/** \
 **Institut de Recerca Biomèdica de Barcelona (IRB Barcelona)**
 
