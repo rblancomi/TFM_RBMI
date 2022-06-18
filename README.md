@@ -8,7 +8,7 @@ Necessary code to reproduce all the data from the final master project entitled 
 *"The impact and function of degron disruptions in c-terminal truncated proteins and its role in tumorigenesis"*
 <pre>
 Student:        Raquel Blanco Martínez-Illescas
-Supervisors:    Mònica Sánchez Guixé and Núria López-Bigas
+Directors:    Mònica Sánchez Guixé and Núria López-Bigas
 Academic tutor: Luis del Peso Ovalle
 Course:         2021/2022
 </pre>
@@ -16,6 +16,9 @@ Course:         2021/2022
 ## Content
 
 ## Data collection
+
+### 1. UbiNet Position Probability Matrices (PPMs)
+>ubinet_PWMs.ipynb
 
 ## Position Weight Matrices (PWMs) degron motifs
 
