@@ -25,31 +25,34 @@ The following diagram indicates the workflow to perform the analysis, including 
 
 ## Data collection and preprocessing
 
-#### 1. UbiNet Position Probability Matrices (PPMs)
+### 1. UbiNet Position Probability Matrices (PPMs)
 >ubinet_PWMs.ipynb
 
 The first part of this Jupyter notebook contains the code to parse the HTML of UbiNet 2.0 database and retrieve the PPMs of each degron motif.
 
-#### 2. ELM-Manual database
+### 2. ELM-Manual database
+
+#### 2.1. Database generation
 >create_elm_manual_database.ipynb
 
 Jupyter notebook with the code to generate the ELM-Manual database of experimentally validated degrons.
 
+#### 2.2. Database preprocessing
 >prepro_elm_manual_database.ipynb
 
 Jupyter notebook with the code to preprocess ELM-Manual database.
 
-#### 3. Human proteome of Ensembl 92 canonical transcripts
+### 3. Human proteome of Ensembl 92 canonical transcripts
 >ensembl_proteome.ipynb
 
 Jupyter notebook with the code to preprocess the downloaded human proteome of Ensembl 92 canonical transcripts.
 
-#### 4. Last exons of Ensembl 92 canonical transcripts
+### 4. Last exons of Ensembl 92 canonical transcripts
 >ensembl_last_exons.ipynb
 
 Jupyter notebook with the code to preprocess the downloaded exons of Ensembl 92 canonical transcripts and extract every gene's last exon.
 
-#### 5. Annotate Ensembl transcript stable ID (ENST) in CCLE and CPTAC datasets
+### 5. Annotate Ensembl transcript stable ID (ENST) in CCLE and CPTAC datasets
 >stabch_annotate_enst.py
 
 Python script to annotate every mutation or WT form with the ENST of the canonical transcript.
