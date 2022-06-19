@@ -13,6 +13,10 @@ Academic tutor: Luis del Peso Ovalle
 Course:         2021/2022
 </pre>
 
+The following diagram indicates the workflow to perform the analysis, including data collection and preprocessing, downstream analysis and data analysis. All the necessary code is stored in this repository, except the scripts used to generated CPTAC and CCLE preprocessed tables. 
+
+![GitHub Logo](workflow_diagram.png)
+
 ## Content
 
 * [Data collection and preprocessing](#data-collection-and-preprocessing)
@@ -27,83 +31,85 @@ Course:         2021/2022
 
 ## Data collection and preprocessing
 
-### 1. UbiNet Position Probability Matrices (PPMs)
+#### 1. UbiNet Position Probability Matrices (PPMs)
 >ubinet_PWMs.ipynb
 
 The first part of this Jupyter notebook contains the code to parse the HTML of UbiNet 2.0 database and retrieve the PPMs of each degron motif.
 
-### 2. ELM-Manual database
+#### 2. ELM-Manual database
 >create_elm_manual_database.ipynb
 
 Jupyter notebook with the code to generate the ELM-Manual database of experimentally validated degrons.
 
-### 3. Human proteome of Ensembl 92 canonical transcripts
+#### 3. Human proteome of Ensembl 92 canonical transcripts
 >ensembl_proteome.ipynb
 
 Jupyter notebook with the code to preprocess the downloaded human proteome of Ensembl 92 canonical transcripts.
 
-### 4. Last exons of Ensembl 92 canonical transcripts
+#### 4. Last exons of Ensembl 92 canonical transcripts
 >ensembl_last_exons.ipynb
 
 Jupyter notebook with the code to preprocess the downloaded exons of Ensembl 92 canonical transcripts and extract every gene's last exon.
 
-### 5. Annotate Ensembl transcript stable ID (ENST) in CCLE and CPTAC datasets
+#### 5. Annotate Ensembl transcript stable ID (ENST) in CCLE and CPTAC datasets
 >stabch_annotate_enst.py
 
 Python script to annotate every mutation or WT form with the ENST of the canonical transcript.
 
-## Position Weight Matrices (PWMs) degron motifs
+## Downstream analysis
 
-### 1. PWMs from UbiNet degron motifs
+### 1. Position Weight Matrices (PWMs) degron motifs
+
+#### 1.1. PWMs from UbiNet degron motifs
 >ubinet_PWMs.ipynb
 
 The second part of this Jupyter notebook contains the code to transform the PPMs into PWMs.
 
-### 2. PWMs from ELM-Manual degron motifs
+#### 1.2. PWMs from ELM-Manual degron motifs
 >elm_manual_PWMs.ipynb
 
 Jupyter notebook with the code to align degron sequences per motif and transform curated alignments into PWMs.
 
-## PWM scan
+### 2. PWM scan
 
-### 1. Scan
+#### 2.1. Scan
 >motifs_scan_proteome.py
 
 Python script to scan a set of proteins (*e.g.*: proteome) with a PWM using a sliding window technique.
 
-### 2. True degrons scan
+#### 2.2. True degrons scan
 >motifs_separate_substrates.py
 
 Python script to divide the `motifs_scan_proteome.py` output in true degrons and the rest of proteins.
 
-## PWM positivity threshold, information content, specificity and discovery activity
+### 3. PWM positivity threshold, information content, specificity and discovery activity
 >motifs_quality_analysis.py
 
 Python script to calculate per motif features and quality metrics.  
 
-## PWM iterative enrichment
+### 4. PWM iterative enrichment
 >motifs_iterative_enrichment_degener.py
 
 Python script to enrich ELM-Manual PWMs using E3 ligase-substrate interactions from UbiNet database.
 
-## De novo degron identification
+### 5. De novo degron identification
 
-### 1. Discovered degrons
+#### 5.1. Discovered degrons
 >motifs_discovered_degrons.py
 
 Python script to extract the discovered degrons from the `motifs_scan_proteome.py` output. 
 
-### 2. Pool overlapping degrons
+#### 5.2. Pool overlapping degrons
 >pool_overlapping_degrons.ipynb
 
 Jupyter notebook with the code to define the overlapping discovered degrons and pool them together
 
-## Mutations in the last exon
+### 6. Mutations in the last exon
 >stabch_annotate_lastexon.py
 
 Python script to annotate every last-exon mutation in CCLE and CPTAC datasets.
 
-## Mutation annotation in the discovered degrons
+### 7. Mutation annotation in the discovered degrons
 >stabch_annotate_degrons.py
 
 Python script to annotate CPTAC and CCLE mutations and WT forms in the discovered degrons. 
