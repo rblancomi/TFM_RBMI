@@ -1,4 +1,4 @@
-# interactive -c 56
+# execute with an interactive -c 56 (56 cores)
 
 # -- Import libraries -- # 
 
@@ -12,9 +12,9 @@ from multiprocessing import Pool
 from itertools import repeat
 
 ## my modules ##
-sys.path.append("./Utils/")    # modules folder
+sys.path.append("../Utils/")    # modules folder
 from fasta_utils import readFasta_gzip, readFasta_header_gzip
-from motif_utils import motif_scan_v1 as motif_scan # just in case v2 does strange things
+from motif_utils import motif_scan_v1 as motif_scan
 
 
 
@@ -30,7 +30,7 @@ from motif_utils import motif_scan_v1 as motif_scan # just in case v2 does stran
 @click.option('--weight_m_dir', 
 			  '-wm',
 			  required = True,
-			  help = "path to the folder containing motifs weight matrices")
+			  help = "path to the folder containing position weight matrices motifs")
 
 @click.option('--scan_dir', 
 	 		  '-s',
@@ -55,6 +55,11 @@ from motif_utils import motif_scan_v1 as motif_scan # just in case v2 does stran
 
 
 def motifs_scan_proteome(proteome_dir, weight_m_dir, scan_dir, cpus, proteome_format):
+    """
+    Scans a set of proteins (e.g.: proteome) using a sliding window technnique with a PWM.
+    Returns a JSON file of the form {protein: scores}, so that every protein sequence
+    has a list of subsequences scores. Proteins shorter than the PWM have an empty list associated.
+    """
 
     print('\nReading the proteome\n')
     if proteome_format == "json":

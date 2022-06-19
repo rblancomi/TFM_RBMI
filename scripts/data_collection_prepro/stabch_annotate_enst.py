@@ -125,7 +125,6 @@ def check_reps(df, colname):
 @click.option('--mapping_dir', 
 	 		  '-map',
 			  required = True,
-              default = "/workspace/projects/degrons/data/external/ensembl_canonical_transcripts_uniq.tsv",
 			  help = "path to the file containing the ENST-gene symbol mapping") 
 
 @click.option('--stabch_annot_dir', 

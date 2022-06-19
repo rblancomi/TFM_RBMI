@@ -1,5 +1,3 @@
-# Note: cannot currently operate with ELM 20k scan due to difference in protein ID (ENSTs)
-
 # -- Import libraries -- # 
 
 import os
@@ -15,6 +13,20 @@ from copy import deepcopy
 # -- Auxiliary functions -- #
 
 def load_ESIs(pos_set_dir):
+    """
+    Reads a dataframe of E3 ligase-substrate interactions (ESIs) that contains a "gene" column
+    with the ID of the E3 ligase substrate and generates a ESIs dictionary
+    
+    Parameters
+    ----------
+    pos_set_dir: str
+           Path to the folder where dataframes of ESIs per motif are stored
+    
+    Returns
+    -------
+    ESIs: dict
+            Dictionary containing motifs as keys and corresponding sets of substrates as values
+    """
 
     E3s = [E3.split(".")[0] for E3 in os.listdir(pos_set_dir)]
 
@@ -28,6 +40,28 @@ def load_ESIs(pos_set_dir):
 
 
 def motif_sep_substrates(E3, ESIs, scan_dir, substrates_dir, rest_of_seqs_dir, log_file):
+    """
+    Reads a motif's scan file and divides in two scan files: substrates and no-substrates.
+    
+    Parameters
+    ----------
+    E3: str
+           E3 ligase motif to process
+    ESIs: dict
+           Dictionary containing motifs as keys and corresponding sets of substrates as values
+    scan_dir: str
+           Path to the folder containing the E3 ligase motif scan
+    substrates_dir: str
+           Path to the folder where the substrates-filtered scan will be stored
+    rest_of_seqs_dir: str
+           Path to the folder where the scan with the non-substrates will be stored
+    log_file: str
+           Path to the folder where the log file of the process will be stored
+
+    Returns
+    -------
+    None
+    """
 
     print(f'E3-ligase AC: {E3}', file = log_file)
     print(f'E3-ligase AC: {E3}')
@@ -109,6 +143,9 @@ def motif_sep_substrates(E3, ESIs, scan_dir, substrates_dir, rest_of_seqs_dir, l
 
 def motifs_separate_substrates(scan_dir, pos_set_dir, log_dir, scan_subs_dir, 
                             scan_no_subs_dir):
+    """
+    Takes a PWMs scans and generates substrates and non-substrates scans
+    """
 
     print('\nRetrieving E3-ligases ACs to be analysed\n')
     E3s = [E3.split(".")[0] for E3 in os.listdir(scan_dir)]

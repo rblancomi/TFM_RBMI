@@ -27,7 +27,7 @@ The following diagram indicates the workflow to perform the analysis, including 
 ## Repository structure
 
 The repository has the following directories:
-* `data`: contains any necessary data that cannot be generated with the scripts in `scripts` folder, except CPTAC and CCLE preprocessed tables.
+* `data`: contains any necessary data that cannot be generated with the scripts in `scripts` folder, except CPTAC and CCLE preprocessed tables. Also, contains manually edited data from external sources to adjust format to input requirements of some functions. Manually curated alignments for ELM-Manual PWMs generation are stored in `elm_manual/alignments/curated` in FASTA format and PNGs in `elm_manual/alignments/curated_pngs`. 
 * `scripts`: contains all the scripts needed to reproduce the analysis. Divided in:
     * `data_collection_prepro`: scripts to run data collection and preprocessing (yellow in the workflow diagram).
     * `downstream_analysis`: scripts to run downstream analysis, including generation of Position Weight Matrices (PWMs), *de novo* degron identification and mutation annotation (green in the workflow diagram).
@@ -37,10 +37,17 @@ The repository has the following directories:
 
 ## Data collection and preprocessing
 
-### 1. UbiNet Position Probability Matrices (PPMs)
+### 1. UbiNet 
+
+#### 1.1. Position Probability Matrices (PPMs)
 >ubinet_PWMs.ipynb
 
-The first part of this Jupyter notebook contains the code to parse the HTML of UbiNet 2.0 database and retrieve the PPMs of each degron motif.
+The first part of this Jupyter notebook contains the code to parse the HTML of UbiNet 2.0 database and retrieve the PPMs of each degron motif. This notebook is stored in `scripts/downstream_analysis`.
+
+#### 1.2. UbiNet presumed degrons
+>ubinet_degrons.ipynb
+
+Jupyter notebook with the code to collect the presumed degrons used by UbiNet to generate the PPMs motifs (used only in the last part of the UbiNet PWMs validation)
 
 ### 2. ELM-Manual database
 
@@ -52,7 +59,7 @@ Jupyter notebook with the code to generate the ELM-Manual database of experiment
 #### 2.2. Database preprocessing
 >prepro_elm_manual_database.ipynb
 
-Jupyter notebook with the code to preprocess ELM-Manual database.
+Jupyter notebook with the code to preprocess ELM-Manual database and generate the true degron sets.
 
 ### 3. Human proteome of Ensembl 92 canonical transcripts
 >ensembl_proteome.ipynb
