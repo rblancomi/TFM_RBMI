@@ -19,10 +19,10 @@ The following diagram indicates the workflow to perform the analysis, including 
 
 ## Content
 
+* [Repository structure](#repository-structure)
 * [Data collection and preprocessing](#data-collection-and-preprocessing)
 * [Downstream analysis](#downstream-analysis)
 * [Data analysis](#data-analysis)
-* [Repository structure](#repository-structure)
 
 ## Repository structure
 
