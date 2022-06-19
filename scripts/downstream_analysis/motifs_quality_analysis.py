@@ -1,5 +1,3 @@
-# Note: cannot currently operate with ELM 20k scan due to difference in protein ID (ENSTs)
-
 # -- Import libraries -- # 
 
 import os
@@ -14,7 +12,7 @@ import gzip
 import click
 
 ## my modules ##
-sys.path.append("./Utils/")    # modules folder
+sys.path.append("../Utils/")    # modules folder
 from fasta_utils import readFasta_gzip
 from motif_utils import *
 from loads_utils import load_bg_aa
@@ -27,30 +25,28 @@ from loads_utils import load_bg_aa
 @click.option('--aa_bg_dir', 
 	 		  '-aa_bg',
 			  required = True,
-              default = "/home/rblanco/projects/degrons/data/external/aminoacid_frequency.txt",
 			  help = "path to the folder where the aminoacids background probabilities\
               file is located")
 
 @click.option('--proteome_dir', 
 	 		  '-p',
-               default = "/home/rblanco/projects/degrons/data/external/uniprot/uniprot_proteome_UP000005640.fasta.gz",
 			  required = True,
 			  help = "path to the folder where the proteome file is located")
 
 @click.option('--prob_m_dir', 
 			  '-pm',
 			  required = True,
-			  help = "path to the folder containing motifs probability matrices")
+			  help = "path to the folder containing motifs position probability matrices")
 
 @click.option('--weight_m_dir', 
 			  '-wm',
 			  required = True,
-			  help = "path to the folder containing motifs weight matrices")
+			  help = "path to the folder containing motifs position weight matrices")
 
 @click.option('--pos_set_dir', 
 	 		  '-ps',
 			  required = True,
-			  help = "path to the folder where positive sequences files are stored")
+			  help = "path to the folder where positive sequences (real degrons) files are stored")
 
 @click.option('--scan_dir', 
 	 		  '-s',
@@ -60,7 +56,7 @@ from loads_utils import load_bg_aa
 @click.option('--scan_own_seqs_dir', 
 	 		  '-s_pos',
 			  required = True,
-			  help = "path to the folder where positive sequences scans are stored")
+			  help = "path to the folder where positive sequences (real degrons) scans are stored")
 
 @click.option('--scan_rest_seqs_dir', 
 	 		  '-s_nopos',
@@ -87,7 +83,7 @@ from loads_utils import load_bg_aa
 
 # -- Main function  -- #
 
-# Execute in an interactive -m 64
+# Execute in an interactive -m 64 (64 Gb memory)
 
 def motif_quality_analysis(aa_bg_dir, proteome_dir, prob_m_dir, weight_m_dir, pos_set_dir,
                             scan_dir, scan_own_seqs_dir, scan_rest_seqs_dir,

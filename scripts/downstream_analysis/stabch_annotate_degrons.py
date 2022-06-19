@@ -12,6 +12,18 @@ import click
 
 def isinterval(position): 
     """
+    Takes a genomic position and determines if it is an 
+    interval
+
+    Parameters
+    ----------
+    position: str
+            Posible interval
+
+    Returns
+    -------
+    True if interval
+    False if not interval
     """
     try:
         for p in position:
@@ -131,10 +143,6 @@ def annot_stabch_new_instances(row, d):
                 degron_vs_mut_loc_l.append("unknown")
 
             # Mutation is an interval
-            # Note: mutations falling both inside and outside a degron are excluded
-            # Note2: Raquel, you can trust how you did below, is reviewed
-            # Note3: Raquel, you should not have trusted yourself, it was incorrect in the end.
-            # I hope it works now, for the sake of my TFM >.<
             elif isinstance(mut_pos, list):    
                 # Mutation INSIDE the degron
                 if (degron_start <= mut_pos[0]) and (degron_end >= mut_pos[1]):
@@ -198,8 +206,7 @@ def annot_stabch_new_instances(row, d):
 @click.option('--discov_instances_dir', 
 	 		  '-disc',
 			  required = True,
-              default = "/home/rblanco/projects/degrons/results/discovered_degrons/proteome_20k_overlapping_pooled/",
-			  help = "path to the motifs discovered instances directory")
+			  help = "path to the motifs discovered instances directory (overlapping degrons pooled)")
 
 @click.option('--stabch_annot_dir', 
 	 		  '-annot',

@@ -11,6 +11,20 @@ import click
 # -- Auxiliary functions -- # 
 
 def annot_ctype(row, ctype):
+    """
+    Annotates the cancer type in the pancancer table
+
+    Parameters
+    ----------
+    row: pandas dataframe row
+            Dataframe row of the stability change table
+    ctype: str
+            Cancer type
+
+    Returns
+    -------
+    pandas dataframe row with the cancer type annotated
+    """
     
     row["Cancer_type"] = ctype.split(".")[0]
     
@@ -23,8 +37,8 @@ def annot_ctype(row, ctype):
 @click.option('--stabch_dir', 
 	 		  '-stabch',
 			  required = True,
-			  help = "path to the stability change files directory (generally,\
-                   with discovered instances annotated")
+			  help = "path to the stability change files directory \
+                   (with discovered instances annotated")
 
 @click.option('--pancancer_dir', 
 	 		  '-panc',
@@ -34,6 +48,10 @@ def annot_ctype(row, ctype):
 # -- Main function  -- #
 
 def stabch_create_pancancer(stabch_dir, pancancer_dir):
+    """
+    Generates a pancancer stability change table from several cancer types
+    tables
+    """
 
     print(f'\nDefining cancer types...\n')
     ctypes = os.listdir(stabch_dir)

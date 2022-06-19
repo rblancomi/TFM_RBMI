@@ -1,0 +1,21 @@
+[params]
+cores=1
+memory=16G
+
+[pre]
+. "/home/$USER/anaconda3/etc/profile.d/conda.sh"
+conda activate degrons
+
+[jobs]
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/cohort.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/cohort.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/BRCA.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/BRCA.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/OV_JHU.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/OV_JHU.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/OV_PNNL.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/OV_PNNL.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/GBM.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/GBM.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/COAD.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/COAD.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/UCEC.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/UCEC.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/HNSC.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/HNSC.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/CCRCC.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/CCRCC.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/LUSC.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/LUSC.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CPTAC/lexon_annot/LUAD.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/cptac_cancer_types/LUAD.gz
+python3 ../scripts/stabch_annotate_new_instances.py -stabch ../data/stability_change/CCLE/lexon_annot/ccle.ms.enst.lexon.gz -annot ../results/stability_change_annot_degrons/CPTAC_CCLE_MS_3/stability_change_cclems.tsv.gz

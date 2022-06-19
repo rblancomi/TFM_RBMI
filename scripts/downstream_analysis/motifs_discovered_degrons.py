@@ -8,7 +8,7 @@ import gzip
 import click
 
 ## my modules ##
-sys.path.append("./Utils/")    # modules folder
+sys.path.append("../Utils/")    # modules folder
 from fasta_utils import readFasta_gzip, readFasta_header_gzip
 
 # -- Main function options -- #
@@ -44,6 +44,9 @@ from fasta_utils import readFasta_gzip, readFasta_header_gzip
 # -- Main function  -- #
 
 def motifs_new_instances_discovered(motifs_metrics_dir, scan_dir, proteome_dir, new_instances_discovered_dir, proteome_format):
+    """
+    Takes a PWM motif scanned and filters the discovered degrons based on the motif's positivity threshold
+    """
 
     print("\nLoad motifs IDs\n")
     motifs_IDs = [motif.split(".")[0] for motif in os.listdir(scan_dir)]

@@ -20,6 +20,7 @@ The following diagram indicates the workflow to perform the analysis, including 
 ## Content
 
 * [Repository structure](#repository-structure)
+* [Requirements](#requirements)
 * [Data collection and preprocessing](#data-collection-and-preprocessing)
 * [Downstream analysis](#downstream-analysis)
 * [Data analysis](#data-analysis)
@@ -34,6 +35,13 @@ The repository has the following directories:
     * `data_analysis`: scripts to run data analysis (red in the workflow diagram).
     * `external`: scripts from external sources.
     * `Utils`: general util functions for the analysis. 
+
+## Requirements
+
+All the analysis was performed using conda in an environment with the dependencies in `environment.yml`. To install the same environment execute:
+```
+conda env create -n degrons -f environment.yml
+```
 
 ## Data collection and preprocessing
 
@@ -89,6 +97,7 @@ The second part of this Jupyter notebook contains the code to transform the PPMs
 >elm_manual_PWMs.ipynb
 
 Jupyter notebook with the code to align degron sequences per motif and transform curated alignments into PWMs.
+Also generates intermediate PPMs. 
 
 ### 2. PWM scan
 
@@ -137,7 +146,9 @@ Python script to annotate every last-exon mutation in CCLE and CPTAC datasets.
 ### 8. Mutation annotation in the discovered degrons
 >stabch_annotate_degrons.py
 
-Python script to annotate CPTAC and CCLE mutations and WT forms in the discovered degrons. 
+Python script to annotate CPTAC and CCLE mutations and WT forms in the discovered degrons. This script
+was executed in paralell for all CPTAC cancer types and CCLE using [qmap](https://github.com/bbglab/qmap)
+with template file `stabch_annotate_new_instances.qmap`. 
 
 >stabch_create_pancancer.py
 

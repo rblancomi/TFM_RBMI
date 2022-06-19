@@ -3,61 +3,17 @@
 import os
 import pandas as pd
 import numpy as np
-from tqdm import tqdm 
 import gzip
 import logomaker
 from  itertools import chain
-import click              # note:click only works with lower case arguments?
+import click              
 
+## my modules ##
+sys.path.append("../Utils/")    # modules folder
+from fasta_utils import readFasta_gzip
 
 
 # -- Auxiliary functions -- # 
-
-def readFasta_gzip(file):
-    """ 
-    Reads all sequences of a compressed FASTA file and returns a dictionary with the protein's accession number
-    as key and the sequence as value
-    
-    Parameters
-    ----------
-    file: str
-           Path to the folder where the compressed FASTA file is located
-    
-    
-    Returns
-    -------
-    d: dict
-            Dictionary containing each protein's accession number as key and they sequence as value
-    """  
-    
-    with gzip.open(file, 'rt') as f:         # important to set read mode as 'rt' because we are reading a compressed text file
-        
-        data = f.readlines()
-        d = {} 
-        seq_values = []
-        
-        count_id = 0      # Flag variable
-        
-        for line in data:
-            
-            if count_id == 0:  # Flag in cero indicates this line is the first sequence description line in the fasta file
-                if line[0] == '>': # Description lines start with “>” character
-                    id_key = line.split()[0][1:].split("|")[1] # The first column of the description line is the sequence id
-                                                               # and the second element of the description is the AC             
-                    count_id = 1  # Change flag to 1 to indicate the following sequences aren't the first
-            
-            else:
-                if line[0] == '>':
-                    d[id_key] = ''.join(seq_values) # Adds a new entry to the dictionary before overwritting id_key
-                    id_key = line.split()[0][1:].split("|")[1]
-                    seq_values = [] # Restarts the variable that stores every sequence
-                else:
-                    seq_values.append(line.strip('\n'))  # Sequences are divided in several lines in the fasta file
-        
-        d[id_key] = ''.join(seq_values) # Adds last dictionary entry
-    
-    print(f'\tNumber of retrieved sequences: {len(d)}')
-    return d
 
 # Modified version to account for degeneration
 def motif_scan(protein, w_matrix, deg_level = 0):
@@ -118,7 +74,52 @@ def motif_scan(protein, w_matrix, deg_level = 0):
 
 def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter, deg_level = 0, enrichment = False):
     """
+    Iteratively enriches a motif's PWM by scanning the corresponding reported substrates (max 3 iterations). If the first
+    iteration is null, it forzes outter degeneration to allow for degenerative matching (min match of 3 positions)
+    
+    Parameters
+    ----------
+    weight_m: pandas dataframe
+                Dataframe containing a motif's weight matrix, whose rows correspond to motif positions 
+                and columns to aminoacids. Each cell contains the weight associated to each aminoacid in
+                every position of the motif
+    degrons: pandas dataframe
+                Dataframe containing true degrons used to create the motif, with an additional columns
+                to store the information on the iteration where the enrichment degrons are added to the alignment.
+                Columns: ['substrate', 'sequence', 'start', 'end', 'iteration']
+    substrates: set
+                Specific E3 ligase substrates
+    proteome: dict
+                Dictionary which contains protein IDs as keys and proteins sequences as values
+    aa: numpy array
+                Array of alphabetically ordered one-character amino acid names
+    aa_probs: numpy array
+                Array of alphabetically ordered amino acid background probabilities 
+    iter: int
+                Iteration number
+    deg_level: int (default: 0)
+                Level of degeneration allow for PWM scanning, taken both from the c- and n-terminal
+    enrichment: boolean (default: False)
+                If False, indicates no enrichment has ocurred yet
+                If True, indicates enrichment has already ocurred
+    
+    Returns
+    -------
+    weight_m: pandas dataframe
+                Dataframe containing a motif's weight matrix, whose rows correspond to motif positions 
+                and columns to aminoacids. Each cell contains the weight associated to each aminoacid in
+                every position of the motif. Could be an enriched or non-enriched weight matrix
+    degrons or refined_alignment: pandas dataframe
+                Dataframe containing degrons used to create the motif, together with the iteration number
+                in which the degron sequence was included in the alignment.
+                Columns: ['substrate', 'sequence', 'start', 'end', 'iteration']
+    iter: int
+                Final iteration number
+    deg_level: int (default: 0)
+                Maximum level of degeneration reached in the PWM scanning
     """
+
+    
     # Iteration number
     iter += 1
     print(f'\n### ITERATION {iter} ###\n')
@@ -132,7 +133,6 @@ def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter
     
     positive_range_degrons = (min(scores_degrons), max(scores_degrons))
     if positive_range_degrons[0] < 0:
-        #positive_range_degrons = (0, max(scores_degrons))
         positive_range_degrons = (min([s for s in scores_degrons if (s >= 0)]), max(scores_degrons))
     
     print(f'\tPositivity scores range: {positive_range_degrons}\n')
@@ -141,7 +141,6 @@ def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter
     new_degrons = []
     
     for substrate in substrates:
-        #print(f'\tSubstrate being scanned: {substrate}')
 
         if deg_level == 0:
             sequence = proteome[substrate]
@@ -151,7 +150,6 @@ def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter
             scores = motif_scan(sequence, weight_m, deg_level)
 
         pos_scores = [s for s in scores if (s >= positive_range_degrons[0]) and (s <= positive_range_degrons[1])].sort(reverse = True) # sort to first analyze higher values
-        #print(f'\t\tPositive scores: {pos_scores}')
         
         # In case there is a sequence scoring positive (presumed degron), extract its position
         if pos_scores != []:
@@ -165,19 +163,13 @@ def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter
                 ## This degron was not considered in the motif and the substrate has not contributed to the motif more than 1 time
                 if (degrons[(degrons.substrate == substrate) & (degrons.sequence == degron)].empty == True) and\
                     (degrons[degrons.substrate == substrate].shape[0] < 1) and (substrate not in chain(*new_degrons)):
-                    #print("\t\tNew degron instance found! Adding to the alignment...\n")
                     new_degrons.append([substrate, degron, start, end, iter])
-                    #print(f'{degrons[degrons.substrate == substrate].shape[0]}\n')
-                    #print(f'{degrons[degrons.substrate == substrate]}\n')
-                    #print("substrate\tsequence\tstart\tend\titeration")
-                    #print(f'\t{substrate}\t{degron}\t{start}\t{end}\t{iter}\n')
 
                 # This degron was already considered in the motif
                 else:
                     ## Degron's position is unknown
                     if degrons[(degrons.substrate == substrate) & (degrons.sequence == degron) &\
                         (degrons.start == "NA") & (degrons.end == "NA")].empty == False:
-                        #print("\tThis degron instance was already considered in the alignment but coordinates were not annotated. Annotating coordinates...\n")
                         degrons.at[(degrons["substrate"] == substrate), 'start'] = start
                         degrons.at[(degrons["substrate"] == substrate), 'end'] = end
     
@@ -201,7 +193,6 @@ def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter
         # Join with previous degrons df
         refined_alignment = pd.concat([degrons, new_degrons_df])
         refined_alignment.reset_index(inplace = True, drop = True)
-        #print(f'{refined_alignment}\n')
         
         # Generate new count matrix from old and new degrons
         count_m = logomaker.alignment_to_matrix(list(refined_alignment.sequence), to_type = "counts")
@@ -217,7 +208,6 @@ def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter
         # Generate weight matrix considering bg aa probabilities
         weight_m = logomaker.transform_matrix(count_m, from_type = 'counts', 
                                               to_type = 'weight', background = aa_probs)
-        #print(f'New PWM generated: \n{weight_m}\n')
         
         # Perform the scanner again with the refined weight matrix (only until third iteration)
         if iter < 3:
@@ -231,8 +221,6 @@ def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter
 
 # -- Main function options -- #
 
-# note: to use it with individual E3 ligases, generate temp folders for pre-enrichment alignments and PWMs
-# note2: to use it with E3 ligases whose name is not UniProt AC, add AC at the beginning of the name, separated from the rest with an underscore
 
 @click.command()
 
@@ -283,6 +271,9 @@ def refine_alignment(weight_m, degrons, substrates, proteome, aa, aa_probs, iter
 
 
 def refine_motif(esis_dir, proteome_dir, aa_bg_dir, alignments_dir, weight_m_dir, refined_alignments_dir, refined_weight_m_dir, log_file):
+    """
+    Takes a set of alignments and PWMs and iteratively enriches them with subsequences of the corresponding substrates
+    """
 
     # Data loading
     print("\nESIs file being loaded...\n")
@@ -297,7 +288,6 @@ def refine_motif(esis_dir, proteome_dir, aa_bg_dir, alignments_dir, weight_m_dir
     aa = bg_matrix["Aminoacid"].to_numpy() 
 
     # E3 ligases for which we have  motifs generated 
-    #E3s = list(set([E3.split(".")[0] for E3 in os.listdir(alignments_dir)]))
     E3s = np.unique(np.array([E3.split(".")[0] for E3 in os.listdir(alignments_dir)]))
     counter = 0
 
@@ -326,22 +316,18 @@ def refine_motif(esis_dir, proteome_dir, aa_bg_dir, alignments_dir, weight_m_dir
         
         degrons_df = pd.DataFrame(degrons, columns = ['substrate', 'sequence', 'start', 'end', 'iteration'])
         n_original_degrons = len(degrons_df)
-        #print(f'Starting degrons which generated first PWD:\n{degrons_df}\n')
             
         # ESIs subset for the specific E3 ligase
         E3_ESIs = set(ESIs[ESIs.E3_AC == E3.split("_")[0]].SUB_AC)
         
         # Iterative enrichment
-        #print(refine_alignment(weight_m, degrons_df, E3_ESIs, proteome, aa, aa_probs, 0))
-        weight_m, degrons_df, iter, deg_level = refine_alignment(weight_m, degrons_df, E3_ESIs, proteome, aa, aa_probs, 0)
+        weight_m, degrons_df, iter, deg_level = refine_alignment(weight_m, degrons_df, E3_ESIs, proteome, aa, aa_probs, iter = 0)
         print("\n\nENRICHMENT ENDED\n")
-        #print(f'\nFinal Refined PWM:\n\n{weight_m}')
         if len(degrons_df)-n_original_degrons == 0:
             print("No new sequences were found, the motif was not enriched\n")
         else:
             print("Refined PWM being saved...\n")
             weight_m.to_csv(refined_weight_m_dir+E3+".tsv", sep = "\t", index = False)
-            #print(f'\nStarting degrons plus added degrons:\n\n{degrons_df}\n')
             print("Refined alignment being saved...\n")
             degrons_df.to_csv(refined_alignments_dir+E3+".tsv", sep = "\t", index = False)
 

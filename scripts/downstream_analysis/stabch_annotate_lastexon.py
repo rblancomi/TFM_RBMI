@@ -10,11 +10,25 @@ tqdm.pandas()
 
 def isinterval(position): 
     """
+    Takes a genomic position and determines if it is an 
+    interval
+
+    Parameters
+    ----------
+    position: str
+            Posible interval
+
+    Returns
+    -------
+    True if interval
+    False if not interval
     """
-    for p in position:
-        if p == "-":
-            return True
-    return False
+    try:
+        for p in position:
+            if p == "-":
+                return True
+    except:
+        return False
 
 def annot_mut_last_exon(row, last_exons, symb_colname):
     """
