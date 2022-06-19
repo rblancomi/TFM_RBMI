@@ -1,6 +1,6 @@
 # Final Master Project
 
-**Master in Bioinformatics and Computational Biology, Universidad Autónooma de Madrid (UAM)**\
+**Master in Bioinformatics and Computational Biology, Universidad Autónoma de Madrid (UAM)**\
 **Barcelona Biomedical Genomics Lab (BBGLab) https://bbglab.irbbarcelona.org/** \
 **Institut de Recerca Biomèdica de Barcelona (IRB Barcelona)**
 
@@ -35,7 +35,7 @@ The first part of this Jupyter notebook contains the code to parse the HTML of U
 ### 2. ELM-Manual database
 >create_elm_manual_database.ipynb
 
-Jupyter notebook with the code to generate the ELM-Manual table of experimentally validated degrons.
+Jupyter notebook with the code to generate the ELM-Manual database of experimentally validated degrons.
 
 ### 3. Human proteome of Ensembl 92 canonical transcripts
 >ensembl_proteome.ipynb
@@ -79,7 +79,7 @@ Python script to divide the `motifs_scan_proteome.py` output in true degrons and
 ## PWM positivity threshold, information content, specificity and discovery activity
 >motifs_quality_analysis.py
 
-Python script to calculate per motif features and quality metrics. Specifically, `motif_positivity_range` function returns the positivity range from each motif's true degrons, from which the lower limit is the positivity threshold. 
+Python script to calculate per motif features and quality metrics.  
 
 ## PWM iterative enrichment
 >motifs_iterative_enrichment_degener.py
