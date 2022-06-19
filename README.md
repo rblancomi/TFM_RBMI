@@ -107,7 +107,7 @@ Python script to divide the `motifs_scan_proteome.py` output in true degrons and
 
 Jupyter notebook with the code to evaluate UbiNet PWMs with ELM-Manual degrons. 
 
-### 4. PWM positivity threshold, information content, specificity and discovery activity
+### 4. PWM quality analysis (positivity threshold, information content, specificity and discovery activity)
 >motifs_quality_analysis.py
 
 Python script to calculate per motif features and quality metrics.  
