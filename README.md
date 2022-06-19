@@ -13,7 +13,7 @@ Academic tutor: Luis del Peso Ovalle
 Course:         2021/2022
 </pre>
 
-The following diagram indicates the workflow to perform the analysis, including data collection and preprocessing, downstream analysis and data analysis. All the necessary code is stored in this repository, except the scripts used to generated CPTAC and CCLE preprocessed tables. 
+The following diagram indicates the workflow to perform the analysis, including data collection and preprocessing (yellow), downstream analysis (green) and data analysis (red). All the necessary code is stored in this repository, except the scripts used to generated CPTAC and CCLE preprocessed tables. 
 
 ![GitHub Logo](workflow_diagram.png)
 
@@ -22,6 +22,18 @@ The following diagram indicates the workflow to perform the analysis, including 
 * [Data collection and preprocessing](#data-collection-and-preprocessing)
 * [Downstream analysis](#downstream-analysis)
 * [Data analysis](#data-analysis)
+* [Repository structure](#repository-structure)
+
+## Repository structure
+
+The repository has the following directories:
+* `data`: contains any necessary data that cannot be generated with the scripts in `scripts` folder, except CPTAC and CCLE preprocessed tables.
+* `scripts`: contains all the scripts needed to reproduce the analysis. Divided in:
+    * `data_collection_prepro`: scripts to run data collection and preprocessing (yellow in the workflow diagram).
+    * `downstream_analysis`: scripts to run downstream analysis, including generation of Position Weight Matrices (PWMs), *de novo* degron identification and mutation annotation (green in the workflow diagram).
+    * `data_analysis`: scripts to run data analysis (red in the workflow diagram).
+    * `external`: scripts from external sources.
+    * `Utils`: general util functions for the analysis. 
 
 ## Data collection and preprocessing
 
