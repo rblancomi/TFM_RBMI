@@ -35,6 +35,10 @@ The first part of this Jupyter notebook contains the code to parse the HTML of U
 
 Jupyter notebook with the code to generate the ELM-Manual database of experimentally validated degrons.
 
+>prepro_elm_manual_database.ipynb
+
+Jupyter notebook with the code to preprocess ELM-Manual database.
+
 #### 3. Human proteome of Ensembl 92 canonical transcripts
 >ensembl_proteome.ipynb
 
@@ -76,37 +80,46 @@ Python script to scan a set of proteins (*e.g.*: proteome) with a PWM using a sl
 
 Python script to divide the `motifs_scan_proteome.py` output in true degrons and the rest of proteins.
 
-### 3. PWM positivity threshold, information content, specificity and discovery activity
+### 3. UbiNet PWMs validation
+>ubinet_PWMs_validation.ipynb
+
+Jupyter notebook with the code to evaluate UbiNet PWMs with ELM-Manual degrons. 
+
+### 4. PWM positivity threshold, information content, specificity and discovery activity
 >motifs_quality_analysis.py
 
 Python script to calculate per motif features and quality metrics.  
 
-### 4. PWM iterative enrichment
+### 5. PWM iterative enrichment
 >motifs_iterative_enrichment_degener.py
 
 Python script to enrich ELM-Manual PWMs using E3 ligase-substrate interactions from UbiNet database.
 
-### 5. De novo degron identification
+### 6. De novo degron identification
 
-#### 5.1. Discovered degrons
+#### 6.1. Discovered degrons
 >motifs_discovered_degrons.py
 
 Python script to extract the discovered degrons from the `motifs_scan_proteome.py` output. 
 
-#### 5.2. Pool overlapping degrons
+#### 6.2. Pool overlapping degrons
 >pool_overlapping_degrons.ipynb
 
 Jupyter notebook with the code to define the overlapping discovered degrons and pool them together
 
-### 6. Mutations in the last exon
+### 7. Mutations in the last exon
 >stabch_annotate_lastexon.py
 
 Python script to annotate every last-exon mutation in CCLE and CPTAC datasets.
 
-### 7. Mutation annotation in the discovered degrons
+### 8. Mutation annotation in the discovered degrons
 >stabch_annotate_degrons.py
 
 Python script to annotate CPTAC and CCLE mutations and WT forms in the discovered degrons. 
+
+>stabch_create_pancancer.py
+
+Python script to merge CPTAC cancer types tables into a pancancer table after degron annotation. 
 
 ## Data analysis
 >Figures.ipynb
