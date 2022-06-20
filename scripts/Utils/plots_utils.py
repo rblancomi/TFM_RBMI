@@ -26,11 +26,30 @@ from stabch_utils import concat_subsets
 # Palette according to y values
 #https://stackoverflow.com/questions/36271302/changing-color-scale-in-seaborn-bar-plot
 def colors_from_values(values, palette_name, n_remove_outliers = 0):
+    """
+    Modifies a plot palette based on an array of values to match palette degradation with 
+    them. If necessary, does not consider n outliers.
+    
+    Parameters
+    ----------
+    values: numpy array 
+           Array of integers or floats to calculate the palette from
+    palette_name: str
+           Valid matplotlib palette name
+    n_remove_outliers: int (default: 0)
+           Number of outliers to remove for building the palette degradation scheme. 
+           Note: currently only implemented for max 1 outlier.
+    
+    Returns
+    -------
+    d: numpy array
+           Array with the palette indices to consider in the plot
+    """
     # normalize the values to range [0, 1]
-    # consider outliers so that there is a consistent degradation in the palette
-    # currently, this will only work for 1 outlier
+    ## consider outliers so that there is a consistent degradation in the palette
+    ## currently, this will only work for 1 outlier
     for i in range(n_remove_outliers):
-        outlier_idx = np.where(values == np.amax(values))
+        outlier_idx = np.where(values == np.amax(values))     # max value = outlier
         values_wout_outlier = np.delete(values, outlier_idx)
         np.put(values, outlier_idx, np.amax(values_wout_outlier))
     normalized = (values - min(values)) / (max(values) - min(values))
@@ -44,12 +63,26 @@ def colors_from_values(values, palette_name, n_remove_outliers = 0):
     return np.array(palette).take(indices, axis = 0)
 
 def create_all_pairs(conditions):
+    """
+    Generates all possible conditions pairs for statistical comparison
+
+    Parameters
+    ----------
+    conditions: list
+            List with all possible conditions. No needs to be sorted in any 
+            specific manner.
+    
+    Returns
+    -------
+    pairs: list of tuples
+            List with tuples representing all possible conditions to be compared
+    """
     
     pairs = []
-    i = 0
+    i = 0  
     
     for cond1 in conditions:
-        i += 1
+        i += 1    # to exclude comparison with itself
         for cond2 in conditions[i:]:
             
             pairs.append((cond1, cond2))
@@ -58,31 +91,77 @@ def create_all_pairs(conditions):
 
 def isinterval(position): 
     """
+    Takes a genomic position and determines if it is an 
+    interval
+
+    Parameters
+    ----------
+    position: str
+            Posible interval
+
+    Returns
+    -------
+    True if interval
+    False if not interval
     """
-    for p in position:
-        if p == "-":
-            return True
-    return False
+    try:
+        for p in position:
+            if p == "-":
+                return True
+    except:
+        return False
 
 
 ## -- QUALITY ANALYSIS PLOTS -- ##
 
 def barplot_qa_property(qa_df, property, ylab_property, plot_file, font_y = 15, font_x = 15, n_remove_outliers = 0, 
                         fig_width = 20, fig_height = 6):
+    """
+    Barplot to display a QA calculated property per motif, using a color palette based on property values.
+
+    Parameters
+    ----------
+    qa_df: pandas dataframe
+            Pandas dataframe of the quality analysis metrics.
+    property: str
+            Column name of the property to be plotted in qa_df
+    ylab_property: str
+            Y label for the barplot
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    font_y: int (default: 15)
+            Y label font size
+    font_x: int (default: 15)
+            X label font size
+    n_remove_outliers: int (default: 0)
+            Number of outliers to remove for building the palette degradation scheme. 
+            Note: currently only implemented for max 1 outlier. Passed to colors_from_values
+            function
+    fig_width: int (default: 20)
+            Figure width
+    fig_height: int (default: 6)
+            Figure height
+    
+    Returns
+    -------
+    ax: matplotlib plot
+            QA property barplot
+            
+    """
     
     # Generate property df and subsets
     property_df = qa_df[["motif_id", property]].sort_values(by = ["motif_id"])
     x = property_df["motif_id"].values
     y = property_df[property].values
-    y_pal = deepcopy(y)  # to avoid changing the original one when handling color outliers
+    y_pal = deepcopy(y)  # to avoid changing the y-array for the barplot when handling color outliers
     
-    # Barplot
+    # Plot settings
     plt.figure(figsize = (fig_width, fig_height))
     sns.set_style("white")
-
-    # Define palette by y values
+    ## Define palette by y values
     palette = colors_from_values(y_pal, "YlOrRd", n_remove_outliers)
 
+    # Barplot
     ax = sns.barplot(x = x, y = y, palette = palette)
     ax.set_ylabel(ylab_property, fontsize = font_y)
     ax.set_xlabel("Degron motif", fontsize = font_x)
@@ -92,13 +171,14 @@ def barplot_qa_property(qa_df, property, ylab_property, plot_file, font_y = 15, 
     ax.spines['right'].set_visible(False)
     plt.yticks(fontsize = 15)
 
-    # Colorbar
+    # Add colorbar legend (customized)
     cmap = plt.cm.get_cmap("YlOrRd")
     sm = plt.cm.ScalarMappable(cmap = cmap, norm = plt.Normalize(qa_df[property].min(), qa_df[property].max()))
     sm.set_array([])
     cbar = plt.colorbar(sm)
     cbar.ax.tick_params(labelsize = 15)
 
+    # Save
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
     
     return ax
@@ -108,34 +188,89 @@ def barplot_broken_axis_qa_property(qa_df, property, ylab_property, y_lim_high, 
                                     low_pad_x, high_pad_x, low_pad_y, high_pad_y, plot_file, font_y = 18, 
                                     font_x = 18, property_percentage = None, n_remove_outliers = 0,
                                     fig_width = 20, fig_height = 8):
+    """
+    Barplot to display a QA calculated property per motif, using a color palette based on property values.
+    Includes broken axis to account for very big outliers.
+
+    Parameters
+    ----------
+    qa_df: pandas dataframe
+            Pandas dataframe of the quality analysis metrics.
+    property: str
+            Column name of the property to be plotted in qa_df
+    ylab_property: str
+            Y label for the barplot
+    y_lim_high: int
+            Y-axis limit for the top part of the barplot
+    y_lim_low: int
+            Y-axis limit for the bottom part of the barplot
+    low_pad_x: int
+            X-axis padding in the bottom part of the barplot
+            for integer or percentages annotation over the bars
+    high_pad_x: int
+            X-axis padding in the top part of the barplot
+            for integer or percentages annotation over the bars
+    low_pad_y: int
+            Y-axis padding in the bottom part of the barplot
+            for integer or percentages annotation over the bars
+    high_pad_y: int
+            Y-axis padding in the top part of the barplot
+            for integer or percentages annotation over the bars
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    font_y: int (default: 18)
+            Y label font size
+    font_x: int (default: 18)
+            X label font size
+    property_percentage: str (default: None)
+            If None, absolute y values are added over the bars
+            If str: str has to be the column name of the property_percentage
+            in the qa_df. Percentage y values are then added over the bars.
+    n_remove_outliers: int (default: 0)
+            Number of outliers to remove for building the palette degradation scheme. 
+            Note: currently only implemented for max 1 outlier. Passed to colors_from_values
+            function
+    fig_width: int (default: 20)
+            Figure width
+    fig_height: int (default: 8)
+            Figure height
+    
+    Returns
+    -------
+    ax1, ax2: matplotlib plots
+            QA top and bottom property barplot
+            
+    """
     
     # Generate property df and subsets
-    if property_percentage == None:  # percentage to be plotted
+    ## To plot percentages over the bars
+    if property_percentage == None:  
         property_df = qa_df[["motif_id", property]].sort_values(by = ["motif_id"])
+    ## To plot absolute values over the bars
     else:
         property_df = qa_df[["motif_id", property, property_percentage]].sort_values(by = ["motif_id"])
         
     x = property_df["motif_id"].values
     y = property_df[property].values
-    y_pal = deepcopy(y)  # to avoid changing the original one when handling color outliers
+    y_pal = deepcopy(y)   # to avoid changing the y-array for the barplot when handling color outliers
     
     
-    # Barplot with broken axis
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex = True)
+    # Plot settings for broken axis
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex = True)   # generate 2 subplots
     sns.set_style("white")
     palette = colors_from_values(y_pal, "YlOrRd", n_remove_outliers)
     fig.set_size_inches((fig_width, fig_height))
     fig.subplots_adjust(hspace = 0.05)  # adjust space between axes
     
-    # plot the same data on both axes
+    # Barplot: plot the same data on both axes
     sns.barplot(x = x, y = y, palette = palette, ax = ax1)
     sns.barplot(x = x, y = y, palette = palette, ax = ax2)
     
-    # zoom-in / limit the view to different portions of the data
-    ax1.set_ylim(y_lim_high)  # high levels
-    ax2.set_ylim(y_lim_low)  # low levels
+    ## zoom-in / limit the view to different portions of the data
+    ax1.set_ylim(y_lim_high)  # high levels (top part of the plot)
+    ax2.set_ylim(y_lim_low)  # low levels (bottom part of the plot)
     
-    # hide the spines between ax and ax2
+    ## hide the spines between ax and ax2
     ax1.spines.bottom.set_visible(False)
     ax2.spines.top.set_visible(False)
     ax1.spines.top.set_visible(False)
@@ -145,10 +280,10 @@ def barplot_broken_axis_qa_property(qa_df, property, ylab_property, y_lim_high, 
     ax2.spines.right.set_visible(False)
     ax1.spines.right.set_visible(False)
     
-    # generate a big subplot for y label
+    ## generate a big subplot for y label
     ax = fig.add_subplot(111, frameon = False)
-    # hide tick and tick label of the big axis
-    ax.tick_params(labelcolor='none', which='both', top=False, bottom=False, left=False, right=False)
+    ### hide tick and tick label of the big axis
+    ax.tick_params(labelcolor = 'none', which = 'both', top = False, bottom = False, left = False, right = False)
     ax.set_ylabel(ylab_property, fontsize = font_y)
     ax2.set_xlabel("Degron motif", fontsize = font_x)
     ax2.set_xticklabels(x, rotation = 45, ha = "right")
@@ -156,39 +291,42 @@ def barplot_broken_axis_qa_property(qa_df, property, ylab_property, y_lim_high, 
     ax1.tick_params(labelsize = 15)
     plt.yticks(fontsize = 15)
     
-    # generate axis break
+    ## generate axis break
     d = .5  # proportion of vertical to horizontal extent of the slanted line
     kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
               linestyle="none", color='k', mec='k', mew=1, clip_on=False)
     ax1.plot([0, 1], [0, 0], transform = ax1.transAxes, **kwargs)
     ax2.plot([0, 1], [1, 1], transform = ax2.transAxes, **kwargs)
     
-    # label with percentages
+    # Labels over the bars
+    ## label with percentages
     if property_percentage != None:
         percents = property_df[property_percentage].values
+        # Top plot
         for p, percent in zip(ax1.patches, percents):
             if p.get_height() >= y_lim_low[1]:
                 ax1.annotate(str(round(percent, 3)), xy = (p.get_x() + high_pad_x, 
                             p.get_height() + high_pad_y), fontsize = 13)
-
+        # Bottom plot
         for p, percent in zip(ax2.patches, percents):
             if p.get_height() < y_lim_low[1]:
                 ax2.annotate(str(round(percent, 3)), xy = (p.get_x() + low_pad_x,
                             p.get_height() + low_pad_y), fontsize = 13)
     
-    # label with absolute values
+    ## label with absolute values
     else:
+        # Top plot
         for p in ax1.patches:
             if p.get_height() >= y_lim_low[1]:
                 ax1.annotate(str(round(p.get_height())), xy = (p.get_x() + high_pad_x, 
                             p.get_height() + high_pad_y), fontsize = 13)
-
+        # Bottom plot
         for p in ax2.patches:
             if p.get_height() < y_lim_low[1]:
                 ax2.annotate(str(round(p.get_height())), xy = (p.get_x() + low_pad_x,
                             p.get_height() + low_pad_y), fontsize = 13)
 
-    # Colorbar
+    # Add colorbar legend (customized)
     cmap = plt.cm.get_cmap("YlOrRd")
     sm = plt.cm.ScalarMappable(cmap = cmap, norm = plt.Normalize(qa_df[property].min(), qa_df[property].max()))
     sm.set_array([])
@@ -196,19 +334,56 @@ def barplot_broken_axis_qa_property(qa_df, property, ylab_property, y_lim_high, 
     cbar = plt.colorbar(sm, cax = cbaxes)
     cbar.ax.tick_params(labelsize = 15)
 
+    # Save
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
 
-    return ax1,ax2
+    return ax1, ax2
 
-def violinplot_pos_threshold(pwm, pos_set, nopos_scan, qa_df, E3, proteome, plot_file, n_samples = 100, negatives_to_zero = False, 
+def violinplot_pos_threshold(pwm, pos_set, nopos_scan, E3, proteome, plot_file, n_samples = 100, negatives_to_zero = False, 
                             fig_width = 5, fig_height = 10):
+    """
+    Violinplot to display the different distribution in a PWM scores over the set of true degrons and a random set of protein
+    subsequences. Also, shows the positivity threshold. 
+
+    Parameters
+    ----------
+    pwm: pandas dataframe
+            Dataframe containing a motif's weight matrix, whose rows correspond to motif's positions 
+            and columns to aminoacids. Each cell contains the weight associated to each aminoacid in
+            each position of the motif
+    pos_set: pandas dataframe
+            Dataframe containing the set of true degrons for a specific motif. Columns: gene, sequence,
+            start, end
+    nopos_scan: dict
+            Dictionary of the form {protein_ID: [scores]}. Contains the protein-associated scores of a
+            motif scan (without true degrons)
+    E3: str
+            E3 ligase motif's name
+    proteome: dict
+            Dictionary of the form {protein_ID: sequence}. Contains a set of protein sequences (e.g.: proteome)
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    n_samples: int (default: 100)
+            Number of random subsequences to include in the random distribution
+    negatives_to_zero: boolean (default: False)
+            If True, negative scores are transformed to zero (for visualization purposes)
+            If False, negative scores are maintained as negative
+    fig_width: int (default: 5)
+            Figure width
+    fig_height: int (default: 10)
+            Figure height
     
+    Returns
+    -------
+    ax: matplotlib plot
+            Violinplot of true degrons vs random sequences scores distribution   
+    """
+
     # Calculate scores of positive set
     pos_set_scores = []
     for row in pos_set.itertuples(): 
         pos_set_scores.append(float(str(motif_scan_flex(row.gene, row.sequence, row.start, row.end, 
                                                         pwm, proteome))[1:-1]))
-        
 
     # Collect random sequences from non-positive set
     nopos_scan_valid_keys = [k for k in nopos_scan if nopos_scan[k] != []]  # some proteins have no scores
@@ -225,7 +400,7 @@ def violinplot_pos_threshold(pwm, pos_set, nopos_scan, qa_df, E3, proteome, plot
     if negatives_to_zero:
         scores.loc[scores.Score < 0] = 0
     
-    # Violinplot (+ stripplot)
+    # Plot settings
     palette1 = {"positive": "#a1d99b", "random": "#ef6548"}
     palette2 = {"positive": "#006d2c", "random": "#b30000"}
     axis_names = ["True\ndegrons\nN = "+str(len(pos_set_scores_df)),
@@ -233,6 +408,8 @@ def violinplot_pos_threshold(pwm, pos_set, nopos_scan, qa_df, E3, proteome, plot
     conditions = ["positive", "random"]
     sns.set_style(style = 'whitegrid')
     plt.figure(figsize = (fig_width, fig_height))
+
+    # Violinplot (+ stripplot)
     ax = sns.violinplot(x = "Set", y = "Score", data = scores,
                         width = 0.7, saturation = 0.7, palette = palette1, fliersize = 0., 
                         linewidth = 1, order = conditions)
@@ -251,28 +428,61 @@ def violinplot_pos_threshold(pwm, pos_set, nopos_scan, qa_df, E3, proteome, plot
     pos_threshold = min(pos_scores)
     plt.axhline(y = pos_threshold, color = 'r', linestyle = '--', alpha = 0.5)
 
+    # Save
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
     
     return ax
 
 def hits_length_scatterplot(qa_df, corr_df, E3, plot_file, font_y = 18, font_x = 18, fig_width = 10, fig_height = 7):
+    """
+    Scatterplot to display a PWMs relation between the number of degrons discovered in each protein sequence vs the protein's
+    length
+
+    Parameters
+    ----------
+    qa_df: pandas dataframe
+            Pandas dataframe of the quality analysis metrics.
+    corr_df: pandas dataframe
+            Dataframe containing the number of discovered degrons per protein per motif and each protein's
+            length
+    E3: str
+            E3 ligase motif's name
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    font_y: int (default: 18)
+            Y label font size
+    font_x: int (default: 18)
+            X label font size
+    fig_width: int (default: 10)
+            Figure width
+    fig_height: int (default: 7)
+            Figure height
     
-    # subsets
+    Returns
+    -------
+    ax: matplotlib plot
+            Violinplot of true degrons vs random sequences scores distribution   
+    """
+    
+    # Motif subset
     y = corr_df["Protein length"].values
     x = corr_df[E3].values
+
+    # Plot settings
     palette = ["red"]
-    
-    # scatterplot
     plt.figure(figsize = (fig_width, fig_height))
     sns.set_style("whitegrid")
+
+    # Scatterplot with regression line
     sns.regplot(x = x, y = y, scatter_kws = {"color": "red"}, line_kws = {"color": "grey"})
-    r_value = qa_df.loc[qa_df.motif_id == E3, "correlation_hits_vs_length_sequence"]
+    r_value = qa_df.loc[qa_df.motif_id == E3, "correlation_hits_vs_length_sequence"]   # display correlation index
     plt.title(E3 + "\nR-value = %0.2f" % (r_value) + f"   N = "+str(len(x)), size = 16, pad = 10)
     plt.xlabel("Number of discovered degrons", fontsize = font_y)
     plt.ylabel("Protein length", fontsize = font_x)
     plt.yticks(fontsize = 15)
     plt.xticks(fontsize = 15)
     
+    # Save
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
 
     return None
@@ -281,21 +491,54 @@ def hits_length_scatterplot(qa_df, corr_df, E3, plot_file, font_y = 18, font_x =
 ## -- DATASET DESCRIPTION PLOTS -- ##
 
 def dataset_piechart(stabch_df, samples_col, ctype_col, dataset, palette, plot_file, min_sample = 15, fig_width = 10, fig_height = 7):
+    """
+    Piechart to display a dataset composition.
+
+    Parameters
+    ----------
+    stabch_df: pandas dataframe
+            Pandas dataframe with the information on the mutations and stability change levels of several proteins. CPTAC or CCLE dataset.
+    samples_col: str
+            Column name in stabch_df for the sample ID
+    ctype_col: str
+            Column name in stabch_df for the cancer type
+    dataset: str
+            Dataset name
+    palette: dict
+            Dictionary of the form {cancer_type: color} to map each cancer type to a specific color.
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    min_sample: int (default: 15)
+            Minimum number of samples in a cancer type to consider such cancer type independendently. If less,
+            merged it in "OTHER" category
+    fig_width: int (default: 10)
+            Figure width
+    fig_height: int (default: 7)
+            Figure height
     
+    Returns
+    -------
+    None 
+    """
+    
+    # Sample IDs and cancer type subset
     subset = stabch_df[[samples_col, ctype_col]]
     subset = subset.drop_duplicates()
+    
+    # Group by cancer type and count number of samples
     subset_gpby = subset.groupby(ctype_col, as_index = False).count().sort_values(samples_col, ascending = False)
     
-    # In case there are groups < min_sample samples, put them together (has no effect in the rest of groups)
+    # In case there are groups < min_sample samples, pull them together
     subset_gpby.loc[subset_gpby[samples_col] < min_sample, ctype_col] = "OTHER"
     subset_gpby = subset_gpby.groupby(subset_gpby[ctype_col]).aggregate({samples_col: 'sum'}).reset_index()
     sizes = subset_gpby[samples_col].tolist()
     labels = subset_gpby[ctype_col].tolist()
     if "cohort" in labels:
-        labels[labels.index("cohort")] = "PDAC"
+        labels[labels.index("cohort")] = "PDAC"  # manually include PDAC
     if "HAEMATOPOIETIC AND LYMPHOID TISSUE" in labels:
-        labels[labels.index("HAEMATOPOIETIC AND LYMPHOID TISSUE")] = "HAEMATOPOIETIC AND\nLYMPHOID TISSUE"
+        labels[labels.index("HAEMATOPOIETIC AND LYMPHOID TISSUE")] = "HAEMATOPOIETIC AND\nLYMPHOID TISSUE"  # better visualization
     
+    # Pieplot 
     def make_autopct(values):
         def my_autopct(pct):
             total = sum(values)
@@ -312,15 +555,70 @@ def dataset_piechart(stabch_df, samples_col, ctype_col, dataset, palette, plot_f
 
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
 
+    return None
+
 ## -- STABILITY CHANGE PLOTS -- ##
 
-# General function to generate stability change plots
-
-def stabch_plot(conditions, pairs, subsets_dict, dataset, stabch, ylim1, ylim2, palette, plot_file = None,
+def stabch_plot(conditions, pairs, subsets_dict, dataset, stabch, ylim1, ylim2, palette, plot_file,
                 degron_features = "all", main_plot = "boxplot",
-               do_stats = True, stripplot = True, E3 = None, custom_title = None, annot_n = True,
-               pad_stats = 130, fig_width = 10, fig_height = 12):
+                do_stats = True, stripplot = True, E3 = None, custom_title = None, annot_n = True,
+                pad_stats = 130, fig_width = 10, fig_height = 12):
     """
+    Boxplot to compare stability change levels between conditions.
+
+    Parameters
+    ----------
+    conditions: list
+            Conditions to compare.
+    pairs: list of tuples
+            Conditions to compare with a statistical test
+    subsets_dict: dict
+            Dictionary of the form {condition: dataframe}. Contains all the samples from a mutations dataframe
+            corresponding to each condition already filtered. 
+    dataset: str
+            Dataset name
+    stabch: pandas dataframe
+            Dataframe containing mutations and stability change levels of several proteins.
+    y_lim1: int
+            Y-axis top limit
+    y_lim2: int
+            Y-axis bottom limit
+    palette: dict
+            Dictionary of the form {condition: color} to map each condition to a specific color.
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    degron_features: str (default: "all")
+            If all: the comparison is for the entire dataset
+            If E3_ligase: the comparison is for a specific motif
+            If degron_instance: the comparison is for a specific degron
+    main_plot: str (default: "boxplot")
+            If boxplot: the main plot is a seaborn boxplot
+            If violinplot: the main plot is a violinplot
+    do_stats: boolean (default: True)
+            If True, a Mann Whitney test will be computed between pairs
+            If False, no statistical test is computed
+    stripplot: boolean (default: True)
+            If True, a seaborn stripplot will be also plotted
+    E3: str (default: None)
+            If None, degron_features must be "all"
+            If str, indicated the E3 ligase for which the conditions are being compared
+    custom_title: str (default: None)
+            If None, degron_features must be "all" or "E3_ligase"
+            If str, the plot title 
+    annot_n: boolean (default: True)
+            If True, sample size is annotated below each condition
+    pad_stats: int (default: 130)
+            The pad between the statistical annotation and the plot's title. Only considered
+            when do_stats = True
+    fig_width: int (default: 10)
+            Figure width
+    fig_height: int (default: 12)
+            Figure height
+    
+    Returns
+    -------
+    ax: matplotlib plot
+            Stability change boxplot comparing selected conditions 
     """
     
     # To drop duplicates
@@ -328,7 +626,7 @@ def stabch_plot(conditions, pairs, subsets_dict, dataset, stabch, ylim1, ylim2, 
     cols = stabch.columns.tolist()
     cols_for_drop = [col for col in cols if col not in cols_to_remove]
     
-    # Palette and axis names dictionaries for all possible conditions
+    # Axis names dictionaries for all possible conditions
     axis_names = {"wt": "WT",
                   "syn_muts": "Synonymous",
                   "miss_muts": "Missense",
@@ -353,12 +651,14 @@ def stabch_plot(conditions, pairs, subsets_dict, dataset, stabch, ylim1, ylim2, 
                   "trunc_aft_muts": "Truncating\nafter\ndegron"}
     
     # Select conditions and generate subsets
+    ## axis and palette
     conditions_axis_names = []
     conditions_palette = {}
     for cond in conditions:
         conditions_axis_names.append(axis_names[cond])
         conditions_palette[cond] = palette[cond]
-        
+
+    ## data subsets: concatenate in unique dataframe
     if degron_features == "all":
         subset = concat_subsets(subsets_dict, conditions, cols_for_drop)
     elif degron_features == "E3_ligase":
@@ -373,15 +673,14 @@ def stabch_plot(conditions, pairs, subsets_dict, dataset, stabch, ylim1, ylim2, 
             conditions_axis_names_n.append(axis_cond+"\nN = "+str(len(subset.loc[subset.Condition == cond])))
         conditions_axis_names = conditions_axis_names_n
     
-    # Generate plots and perform statistical annotation
+    # Plot settings
     sns.set_style(style = 'whitegrid')
     plt.figure(figsize = (fig_width, fig_height)) 
     plt.ylim([ylim1, ylim2])
     pad = 10
     title_size = 20
     if do_stats:
-        pad = pad_stats
-        
+        pad = pad_stats    
     if degron_features == "all":
         plt.title(dataset+' degrons', pad = pad, size = title_size)
     elif degron_features == "E3_ligase":
@@ -389,12 +688,12 @@ def stabch_plot(conditions, pairs, subsets_dict, dataset, stabch, ylim1, ylim2, 
     elif degron_features == "degron_instance":
         plt.title(custom_title, pad = pad, size = title_size)
     
-    ## Stripplot
+    # Stripplot
     if stripplot:
         ax = sns.stripplot(x = "Condition", y = "Stability_Change", data = subset,
                         alpha = 0.3, size = 4, palette = conditions_palette,
                         jitter = True, dodge = True, order = conditions)
-    ## Boxplot
+    # Main plot: boxplot or violinplot
     if main_plot == "violinplot":
         ax = sns.violinplot(x = "Condition", y = "Stability_Change", data = subset,
                         width = 0.7, saturation = 0.7, palette = conditions_palette, fliersize = 0., 
@@ -408,70 +707,87 @@ def stabch_plot(conditions, pairs, subsets_dict, dataset, stabch, ylim1, ylim2, 
     plt.ylabel("Stability change", fontsize = 18)
     plt.xlabel("Mutation type", fontsize = 18)
         
-    # Annotate p values
+    # Perform Mann Whitney test and annotate p values
     if do_stats:
         annotator = Annotator(ax, pairs, data = subset, x = "Condition", y = 'Stability_Change',
                               order = conditions)
         annotator.configure(text_format = "star", loc = 'outside', test = 'Mann-Whitney').apply_and_annotate()
     
+    # Save
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
 
     return ax
 
 def rna_vs_protein_scatterplot(stabch, gene, ctype, dataset, regresline_lim_left, regresline_lim_right, plot_file,
                                 fig_width = 10, fig_height = 10):
+    """
+    Scatterplot to compare RNA vs protein levels of WT forms and altered forms and display the raw residual
+    of the latter (i.e.: stability change). Comparison for a specific protein, cancer type and dataset.
+
+    Parameters
+    ----------
+    stabch: pandas dataframe
+            Dataframe containing mutations and stability change levels of several proteins. CPTAC only, specific 
+            cancer type (no pancancer). Before degrons annotation (does not correct for duplicates)
+    ctype: str
+            Cancer type name
+    gene: str
+            Gene name
+    dataset: str
+            Dataset name. CPTAC only.
+    regresline_lim_left: int
+            Left limit of the regression line to be displayed in the plot
+    regresline_lim_right: int
+            Right limit of the regression line to be displayed in the plot
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    fig_width: int (default: 10)
+            Figure width
+    fig_height: int (default: 10)
+            Figure height
     
-#     # To drop duplicates (added in degron instances prepro)
-#     cols_to_keep = ['gene', 'cpct_aliquot', 'protein_expression', 'aliquot', 'sample',
-#        'Type', 'median', 'stdev', 'norm_protein_expression', 'log2fpkm',
-#        'log10fpkm', '#Uploaded_variation', 'Location', 'Allele', 'Feature',
-#        'protein_mutation', 'Protein_position', 'Amino_acids', 'Consequence',
-#        'Phenotype', 'Ubiquitinases_Mutated', 'Altered_E3_Ligases',
-#        'Raw_Residual', 'Stability_Change', 'ABS_Stability_Change',
-#        'Mut_in_lastexon', 'Cancer_type']
-#     stabch_f = stabch[cols_to_keep].drop_duplicates()
+    Returns
+    -------
+    None
+    """
     
-    # Subset
-#     subset = stabch_f.loc[(stabch_f["gene"] == gene) & (stabch_f["Cancer_type"] == ctype)]
-#     subset = stabch_f.loc[(stabch_f["gene"] == gene)]
+    # Gene subset
     subset = stabch.loc[(stabch["gene"] == gene)]
-#     subset["Y"] = subset.apply(lambda row: row["norm_protein_expression"]-row["Raw_Residual"], axis = 1)
-    
-    # wt
+    ## wt
     x_wt = subset.loc[subset["Phenotype"] == "WT", "log2fpkm"].values
     y_wt = subset.loc[subset["Phenotype"] == "WT", "norm_protein_expression"].values
-    
-    # non-truncanting
+    ## non-truncanting (missense and inframe)
     phen_nontrunc = ["missense_variant", "inframe_insertion", "inframe_deletion"]
     x_nontrunc = subset.loc[subset["Phenotype"].isin(phen_nontrunc), "log2fpkm"].values
     y_nontrunc = subset.loc[subset["Phenotype"].isin(phen_nontrunc), "norm_protein_expression"].values
-    
-    # truncanting
+    ## truncanting
     phen_trunc = ["frameshift_variant", "stop_gained"]
     x_trunc = subset.loc[subset["Phenotype"].isin(phen_trunc), "log2fpkm"].values
     y_trunc = subset.loc[subset["Phenotype"].isin(phen_trunc), "norm_protein_expression"].values
     
-    # Scatterplot
+    # Plot settings
     fig, ax = plt.subplots()
     fig.set_size_inches(fig_width, fig_height)
     sns.set_style("whitegrid")
     
+    # Scatterplot
     ax.scatter(x_wt, y_wt, c = "grey")
     ax.scatter(x_nontrunc, y_nontrunc, c = "#fb9a99")
     ax.scatter(x_trunc, y_trunc, c = "#fdbf6f")
     plt.yticks(fontsize = 15)
     plt.xticks(fontsize = 15)
     
+    # Regression line for WTs
     b, m = polyfit(x_wt, y_wt, deg = 1)
     ax.plot(np.append(x_wt, [regresline_lim_left, regresline_lim_right]), 
             b+m*np.append(x_wt, [regresline_lim_left, regresline_lim_right]), "-") # add 0 to increase lines length
+    ## predicted protein expression according to linear model
     subset["pred_protein_expression"] = subset.apply(
         lambda row: b+m*row["log2fpkm"], axis = 1)
     
-    # Plot stability change
-    # non-truncanting
+    # Plot stability change (predicted vs observed protein levels)
+    ## non-truncanting
     nontrunc_df = subset.loc[subset["Phenotype"].isin(phen_nontrunc)]
-#     list_df = nontrunc_df[['log2fpkm', 'norm_protein_expression', 'Y']].values.tolist()
     list_df = nontrunc_df[['log2fpkm', 'norm_protein_expression', 'pred_protein_expression']].values.tolist()
     x = []
     y = []
@@ -480,11 +796,9 @@ def rna_vs_protein_scatterplot(stabch, gene, ctype, dataset, regresline_lim_left
         y.append([item[1], item[2]])
 
     for i in range(0, len(x)):
-        ax.plot(x[i], y[i], '--', color = "#fb9a99", linewidth = .7)
-    
-    # truncanting
+        ax.plot(x[i], y[i], '--', color = "#fb9a99", linewidth = .7)  
+    ## truncanting
     trunc_df = subset.loc[subset["Phenotype"].isin(phen_trunc)]
-#     list_df = trunc_df[['log2fpkm', 'norm_protein_expression', 'Y']].values.tolist()
     list_df = trunc_df[['log2fpkm', 'norm_protein_expression', 'pred_protein_expression']].values.tolist()
     x = []
     y = []
@@ -499,6 +813,7 @@ def rna_vs_protein_scatterplot(stabch, gene, ctype, dataset, regresline_lim_left
     ax.set_xlabel("mRNA (log2fpkm)", fontsize = 18)
     ax.set_ylabel("Protein expression", fontsize = 18)
 
+    # Add customized legend
     legend_cols_dict = [Line2D([0], [0], color = 'w', markerfacecolor = '#fb9a99', marker = 'o',
                         markersize = 8, label = 'Missense or inframe'),
                         Line2D([0], [0] , color = 'w', markerfacecolor = '#fdbf6f', marker = 'o',
@@ -507,103 +822,41 @@ def rna_vs_protein_scatterplot(stabch, gene, ctype, dataset, regresline_lim_left
                          fontsize = 12, framealpha = 0.3)
     ax.add_artist(legend1)
     
+    # Save
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
 
     return None
 
-def stabch_E3ligase_pointplot(subsets_dict, conditions, dataset, stabch, plot_file, remove_small_subsets = True,
-                             min_n_condition = 9, ylim1 = -0.05, ylim2 = 0.05,
-                            fig_width = 10, fig_height = 10):
-    
-    # To drop duplicates
-    cols_to_remove = ["E3", "degron_start", "degron_end", "Loc_mut_degron"]
-    cols = stabch.columns.tolist()
-    cols_for_drop = [col for col in cols if col not in cols_to_remove]
-    
-    # Palette and axis names dictionaries for all possible conditions
-    axis_names = {"wt": "WT",
-                  "syn_muts": "Synonymous",
-                  "miss_muts": "Missense",
-                  "inframe_muts": "Inframe",
-                  "nonsense_muts": "Nonsense",
-                  "frameshift_muts": "Frameshift",
-                  "nontrunc_muts": "Non-truncating",
-                  "trunc_muts": "Truncanting",
-                  "syn_in_muts": "Synonymous\n inside degron",
-                  "syn_out_muts": "Synonymous\n outside degron", 
-                  "miss_in_muts": "Missense\n inside degron", 
-                  "miss_out_muts": "Missense\n outside degron", 
-                  "inframe_in_muts": "Inframe\n inside degron",
-                  "inframe_out_muts": "Inframe\n outside degron", 
-                  "nonsense_inbf_muts": "Nonsense\n inside/before degron",
-                  "nonsense_aft_muts": "Nonsense\n after degron", 
-                  "frameshift_inbf_muts": "Frameshift\n inside/before degron",
-                  "frameshift_aft_muts":  "Frameshift\n after degron", 
-                  "nontrunc_in_muts": "Non-truncating\n inside degron", 
-                  "nontrunc_out_muts": "Non-truncating\n outside degron",
-                  "trunc_inbf_muts": "Truncating\ninside/before\ndegron", 
-                  "trunc_aft_muts": "Truncating\nafter\ndegron"}
-    
-    palette = {"APC_ABBA": "#8dd3c7",
-               "APC_KENBOX": "#ffffb3",
-               "BTRC": "#bebada",
-               "CBLL1": "#fb8072",
-               "CBL_MET": "#80b1d3",
-               "CBL_PTK": "#fdb462",
-               "COP1": "#b3de69",
-               "DEG_APCC_TPR_1": "#fccde5",
-               "DEG_Kelch_KLHL3_1": "#d9d9d9",
-               "DTL": "#bc80bd",
-               "FBXO31": "#ccebc5",
-               "FBXW7": "#ffed6f",
-               "KEAP1": "#874e4e",
-               "MDM2": "#3a8947", 
-               "SIAH1": "#441449", 
-               "SPOP": "#c96406", 
-               "VHL": "#e32841"}
-    
-    # Select conditions and generate subsets
-    conditions_axis_names = []
-    for cond in conditions:
-        conditions_axis_names.append(axis_names[cond])
-    
-    # Generate subset
-    subset = concat_subsets(subsets_dict, conditions, cols_for_drop)
-    if remove_small_subsets:
-        E3s_to_remove = []
-        
-        for E3 in subset.E3.unique():
-            for cond in conditions:
-                n = len(subset.loc[(subset.Condition == cond) & (subset.E3 == E3)])
-                if n <= min_n_condition:
-                    E3s_to_remove.append(E3)
-                    break
-    
-        subset = subset.loc[~subset.E3.isin(E3s_to_remove)]
-    
-    # Pointplot
-    fig, ax = plt.subplots()
-    fig.set_size_inches(fig_width, fig_height)
-    sns.set_style("whitegrid")
-    sns.set(style = "ticks", rc = {"lines.linewidth": 0.7})
+def stabch_needle_plot(protein_symb, proteome, stabch, dataset, degron_start, degron_end, plot_file, fig_width = 15, fig_height = 10):
+    """
+    Needle plot to display a protein's sequence together with the mutation count per position and the stability change
+    per position
 
-    ax = sns.pointplot(x = "Condition", y = "Stability_Change", data = subset, hue = "E3",
-                      dodge = True, join = True, estimator = np.median, capsize = .05, order = conditions,
-                      ci = 90, errwidth = .5, palette = palette)
+    Parameters
+    ----------
+    protein_symb: str
+            Gene name
+    proteome: dict
+            Dictionary of the form {protein_ID: sequence}. Contains a set of protein sequences (e.g.: proteome)
+    stabch: pandas dataframe
+            Dataframe containing mutations and stability change levels of several proteins. 
+    dataset: str
+            Dataset name.
+    degron_start: int
+            Starting position of the degron in the sequence
+    degron_end: int
+            Ending position of the degron in the sequence
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    fig_width: int (default: 15)
+            Figure width
+    fig_height: int (default: 10)
+            Figure height
     
-    plt.xticks(np.arange(len(conditions_axis_names)), conditions_axis_names, fontsize = 13)
-    plt.ylabel("Stability change", fontsize = 18)
-    plt.xlabel("Mutation type", fontsize = 18)
-    plt.title(dataset+" degrons", size = 20)
-    plt.legend(bbox_to_anchor = (1, 1), frameon = False)
-    plt.ylim([ylim1, ylim2])
-    
-    plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
-
-    return ax
-
-def stabch_needle_plot(protein_symb, proteome, stabch, dataset, degron_start, degron_end, degron_name, plot_file = None,
-                       degron_name_fontsize = 9, fig_width = 15, fig_height = 10):
+    Returns
+    -------
+    None
+    """
     
     # Extract protein sequence and length
     enst = stabch.loc[stabch.gene == protein_symb, "Feature"].unique()[0]
@@ -617,7 +870,8 @@ def stabch_needle_plot(protein_symb, proteome, stabch, dataset, degron_start, de
     phens_nontrunc = ["missense_variant", "inframe_deletion", "inframe_insertion", "synonymous_variant"]
     subset = subset.loc[(subset.gene == protein_symb) &
                        ((subset.Phenotype.isin(phens_nontrunc)) | ((subset.Phenotype.isin(phens_trunc)) &
-                       (subset.Mut_in_lastexon == True))) & (subset.Altered_E3_Ligases == False)].drop_duplicates().sort_values(by = ["protein_mutation"])
+                       (subset.Mut_in_lastexon == True))) & (subset.Altered_E3_Ligases == False)].drop_duplicates().sort_values(
+                        by = ["protein_mutation"])
     
     # Simplify mut type to syn, non-truncating and truncating
     def simplify_conditions(row):
@@ -632,7 +886,7 @@ def stabch_needle_plot(protein_symb, proteome, stabch, dataset, degron_start, de
     
     subset = subset.apply(lambda row: simplify_conditions(row), axis = 1)
 
-    # Convert intervals into point mutations signals
+    # Convert intervals into point mutation signals
     def break_intervals(row):
 
         if isinterval(row.Protein_position):
@@ -730,21 +984,60 @@ def stabch_needle_plot(protein_symb, proteome, stabch, dataset, degron_start, de
     ax3.set_ylim(0, 1)
     rect = patches.Rectangle(xy = (degron_start-1, 0), width = (degron_end-1)-(degron_start-1),
                              height = 10, color = "red", alpha = 0.5, zorder = 2)
-#     ax3.annotate(text = degron_name, xy = (((degron_start-1)+(degron_end-1)) / 2, 0.35), 
-#                  fontsize = degron_name_fontsize)
     ax3.add_patch(rect)
     ax3.set_xlabel("Protein position", fontsize = 15)
     ax3.set_yticks([])
 
+    # Save
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
 
     return None
 
-def stabch_E3ligase_boxplot(conditions, subsets_dict, dataset, stabch, ylim1, ylim2, palette, plot_file = None,
-                degron_features = "all", main_plot = "boxplot",
-               do_stats = True, stripplot = True, E3 = None, custom_title = None, annot_n = True,
-               pad_stats = 130, fig_width = 10, fig_height = 12):
+def stabch_E3ligase_boxplot(conditions, subsets_dict, dataset, stabch, ylim1, ylim2, palette, plot_file,
+                            main_plot = "boxplot", do_stats = True, stripplot = True, pad_stats = 130, 
+                            fig_width = 10, fig_height = 12):
     """
+    Multiple boxplot to compare stability change levels between conditions for several motifs.
+
+    Parameters
+    ----------
+    conditions: list
+            Conditions to compare.
+    subsets_dict: dict
+            Dictionary of the form {condition: dataframe}. Contains all the samples from a mutations dataframe
+            corresponding to each condition already filtered. 
+    dataset: str
+            Dataset name
+    stabch: pandas dataframe
+            Dataframe containing mutations and stability change levels of several proteins.
+    y_lim1: int
+            Y-axis top limit
+    y_lim2: int
+            Y-axis bottom limit
+    palette: dict
+            Dictionary of the form {condition: color} to map each condition to a specific color.
+    plot_file: str
+            Path to the folder where to store the resulting plot
+    main_plot: str (default: "boxplot")
+            If boxplot: the main plot is a seaborn boxplot
+            If violinplot: the main plot is a violinplot
+    do_stats: boolean (default: True)
+            If True, a Mann Whitney test will be computed between pairs
+            If False, no statistical test is computed
+    stripplot: boolean (default: True)
+            If True, a seaborn stripplot will be also plotted
+    pad_stats: int (default: 130)
+            The pad between the statistical annotation and the plot's title. Only considered
+            when do_stats = True
+    fig_width: int (default: 10)
+            Figure width
+    fig_height: int (default: 12)
+            Figure height
+    
+    Returns
+    -------
+    ax: matplotlib plot
+            Stability change boxplot comparing selected conditions for several motifs
     """
     
     # To drop duplicates
@@ -753,18 +1046,15 @@ def stabch_E3ligase_boxplot(conditions, subsets_dict, dataset, stabch, ylim1, yl
     cols_for_drop = [col for col in cols if col not in cols_to_remove]
     
     # Select conditions and generate subsets
+    ## axis and palette
     conditions_palette = {}
     for cond in conditions:
         conditions_palette[cond] = palette[cond]
-        
-    if degron_features == "all":
-        subset = concat_subsets(subsets_dict, conditions, cols_for_drop)
-    elif degron_features == "E3_ligase":
-        subset = concat_subsets(subsets_dict, conditions, cols_for_drop, filter_wts = True)
-    elif degron_features == "degron_instance":
-        subset = concat_subsets(subsets_dict, conditions, cols_for_drop,  drop_duplicates = False)
+
+    ## data subsets: concatenate in unique dataframe   
+    subset = concat_subsets(subsets_dict, conditions, cols_for_drop)
     
-    # Generate plots and perform statistical annotation
+    # Plot settings
     sns.set_style(style = 'whitegrid')
     plt.figure(figsize = (fig_width, fig_height)) 
     plt.ylim([ylim1, ylim2])
@@ -772,15 +1062,9 @@ def stabch_E3ligase_boxplot(conditions, subsets_dict, dataset, stabch, ylim1, yl
     title_size = 20
     if do_stats:
         pad = pad_stats
-        
-    if degron_features == "all":
-        plt.title(dataset+' degrons', pad = pad, size = title_size)
-    elif degron_features == "E3_ligase":
-        plt.title(dataset+' '+E3+' degrons', pad = pad, size = title_size)
-    elif degron_features == "degron_instance":
-        plt.title(custom_title, pad = pad, size = title_size)
+    plt.title(dataset+' degrons', pad = pad, size = title_size)
     
-    ## Filter: motifs which have before/inside condition
+    # Filter: motifs which have before/inside condition
     motifs = subset.E3.unique()
     motifs_f = []
     for motif in motifs:
@@ -788,18 +1072,15 @@ def stabch_E3ligase_boxplot(conditions, subsets_dict, dataset, stabch, ylim1, yl
         if (("trunc_inbf_muts" in motif_conditions) and ("trunc_aft_muts" in motif_conditions))\
              or (("nontrunc_in_muts" in motif_conditions) and ("nontrunc_out_muts" in motif_conditions)):
             motifs_f.append(motif)
-
-    motifs_f.remove("APC_KENBOX")
-    motifs_f.remove("CBL_MET")
     subset = subset.loc[subset.E3.isin(motifs_f)]
 
-    ## Stripplot
+    # Stripplot
     if stripplot:
         ax = sns.stripplot(x = "E3", y = "Stability_Change", data = subset,
                         alpha = 0.3, size = 4, palette = conditions_palette,
                         jitter = True, dodge = True, hue = "Condition", hue_order = conditions,
                         order = motifs_f)
-    ## Boxplot
+    # Main plot: boxplot or violinplot
     if main_plot == "violinplot":
         ax = sns.violinplot(x = "E3", y = "Stability_Change", data = subset,
                         width = 0.7, saturation = 0.7, palette = conditions_palette, fliersize = 0., 
@@ -819,6 +1100,8 @@ def stabch_E3ligase_boxplot(conditions, subsets_dict, dataset, stabch, ylim1, yl
     elif "nontrunc_in_muts" in conditions:
         label_in = 'Inside degron'
         label_out = 'Outside degron'
+
+    # Add customized legend for hue
     legend_cols_dict = [Line2D([0],[0], color ='w', markerfacecolor = "#33a02c", marker = 'o', 
                                markersize = 8, label = 'WT'),
                        Line2D([0],[0], color ='w', markerfacecolor = "#e31a1c", marker = 'o', 
@@ -830,10 +1113,10 @@ def stabch_E3ligase_boxplot(conditions, subsets_dict, dataset, stabch, ylim1, yl
                          fontsize = 12, framealpha = 0.3)
     ax.add_artist(legend)
         
-    # Annotate p values
+    # Perform Mann Whitney test and annotate p values
     if do_stats:
         
-        # Create pairs (with hue)
+        ## create pairs (with hue)
         pairs = []
         for motif in motifs_f:
             i = 0
@@ -842,11 +1125,12 @@ def stabch_E3ligase_boxplot(conditions, subsets_dict, dataset, stabch, ylim1, yl
                 for cond2 in conditions[i:]:
                     pairs.append([(motif, cond1), (motif, cond2)])
                 
-        # annotate stats            
+        ## annotate stats            
         annotator = Annotator(ax, pairs, data = subset, x = "E3", y = 'Stability_Change', hue = "Condition",
         hue_order = conditions, order = motifs_f)
         annotator.configure(text_format = "star", loc = 'outside', test = 'Mann-Whitney').apply_and_annotate()
     
+    # Save
     plt.savefig(plot_file, dpi = 800, transparent = True, bbox_inches = "tight")
 
     return ax

@@ -55,7 +55,7 @@ The first part of this Jupyter notebook contains the code to parse the HTML of U
 #### 1.2. UbiNet presumed degrons
 >ubinet_degrons.ipynb
 
-Jupyter notebook with the code to collect the presumed degrons used by UbiNet to generate the PPMs motifs (used only in the last part of the UbiNet PWMs validation)
+Jupyter notebook with the code to collect the presumed degrons used by UbiNet to generate the PPMs motifs (used only in the last part of the UbiNet PWMs validation).
 
 ### 2. ELM-Manual database
 
@@ -83,6 +83,11 @@ Jupyter notebook with the code to preprocess the downloaded exons of Ensembl 92 
 >stabch_annotate_enst.py
 
 Python script to annotate every mutation or WT form with the ENST of the canonical transcript.
+
+### 6. Annotate cancer type in CCLE dataset
+>add_ctype_to_CCLE.ipynb
+
+Jupyter notebook with the code to annotate the cancer type to each sample.
 
 ## Downstream analysis
 
@@ -136,7 +141,7 @@ Python script to extract the discovered degrons from the `motifs_scan_proteome.p
 #### 6.2. Pool overlapping degrons
 >pool_overlapping_degrons.ipynb
 
-Jupyter notebook with the code to define the overlapping discovered degrons and pool them together
+Jupyter notebook with the code to define the overlapping discovered degrons and pool them together.
 
 ### 7. Mutations in the last exon
 >stabch_annotate_lastexon.py

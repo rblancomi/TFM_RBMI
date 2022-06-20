@@ -6,18 +6,41 @@ from scipy import stats
 # -- Functions -- #
 
 def process_muttype_df(muttype_df, cols_for_drop, cond, check_normality = True, for_one_degron = False):
+    """
+    Process a mutation type condition dataframe from a stability change table to drop duplicated and check
+    for normality
     
+    Parameters
+    ----------
+    muttype_df: pandas dataframe 
+           Condition-filtered stability change dataframe
+    cols_for_drop: list
+           Columns to consider for the drop step
+    cond: str
+           Condition to add to the dataframe in the "Condition" column
+    check_normality: boolean (default: True)
+           If True, performs a normality test over the data
+    for_one_degron: boolean (default: False)
+           If True, the dataframe only contains mutations for a specific degron. Note: pending review of this part. 
+    
+    Returns
+    -------
+    muttype_df: pandas dataframe
+           Processed muttype_df dataframe
+    """
+    
+    # Dataframe contains mutations for a unique degrons
     if for_one_degron:
-        muttype_df = muttype_df.drop_duplicates(subset = cols_for_drop)
+        muttype_df = muttype_df.drop_duplicates(subset = cols_for_drop)  # needed to drop duplicates as well
         muttype_df["Condition"] = cond
-        # may need to add drop duplicates here too
         if check_normality:
             stabch_levels = muttype_df.Stability_Change.values
             try:
                 print(f"Normality test {cond}: {stats.normaltest(stabch_levels).pvalue}")
             except ValueError: # ValueError: skewtest is not valid with less than 8 samples
                 pass
-        
+
+    # Not a unique degron    
     else:    
         muttype_df = muttype_df.drop_duplicates(subset = cols_for_drop)
         
@@ -35,6 +58,26 @@ def process_muttype_df(muttype_df, cols_for_drop, cond, check_normality = True, 
 
 def prepare_subsets_muttype_dict(stabch, conditions, check_normality = True, Altered_E3_Ligases = False):
     """
+    Generates a dictionary of stability change dataframes separated by mutation type. 
+    
+    Parameters
+    ----------
+    stabch: pandas dataframe
+            Dataframe containing mutations and stability change levels of several proteins.
+    conditions: list
+            Conditions to extract from stabch.
+    cond: str
+           Condition to add to the dataframe in the "Condition" column
+    check_normality: boolean (default: True)
+           If True, performs a normality test over the data. Passed to process_muttype_df
+    Altered_E3_Ligases: boolean (default: False)
+           If True, considers samples with mutated E3 ligases
+           If False, excludes any sample with a mutated E3 ligase 
+    
+    Returns
+    -------
+    subsets_muttype_dict_f: dict
+           Dictionary of the form {condition: dataframe}. Contains all the mutation type subsets selected.
     """
     
     # Dictionary to store mut type subsets
@@ -190,6 +233,27 @@ def prepare_subsets_muttype_dict(stabch, conditions, check_normality = True, Alt
 
 def prepare_subsets_muttype_wthE3_dict(stabch, conditions, check_normality = True, Altered_E3_Ligases = False):
     """
+    Generates a dictionary of stability change dataframes separated by mutation type. Maintains duplicated mutations
+    if they affect several motifs analysis. 
+    
+    Parameters
+    ----------
+    stabch: pandas dataframe
+            Dataframe containing mutations and stability change levels of several proteins.
+    conditions: list
+            Conditions to extract from stabch.
+    cond: str
+           Condition to add to the dataframe in the "Condition" column
+    check_normality: boolean (default: True)
+           If True, performs a normality test over the data. Passed to process_muttype_df
+    Altered_E3_Ligases: boolean (default: False)
+           If True, considers samples with mutated E3 ligases
+           If False, excludes any sample with a mutated E3 ligase 
+    
+    Returns
+    -------
+    subsets_muttype_dict_f: dict
+           Dictionary of the form {condition: dataframe}. Contains all the mutation type subsets selected.
     """
     
     # Dictionary to store mut type subsets
@@ -345,6 +409,26 @@ def prepare_subsets_muttype_wthE3_dict(stabch, conditions, check_normality = Tru
 
 def prepare_subsetsE3ligase_muttype_dict(stabch, conditions, E3, check_normality = True, Altered_E3_Ligases = False):
     """
+    Generates a dictionary of stability change dataframes separated by mutation type for a specific degron motif.
+    
+    Parameters
+    ----------
+    stabch: pandas dataframe
+            Dataframe containing mutations and stability change levels of several proteins.
+    conditions: list
+            Conditions to extract from stabch.
+    cond: str
+           Condition to add to the dataframe in the "Condition" column
+    check_normality: boolean (default: True)
+           If True, performs a normality test over the data. Passed to process_muttype_df
+    Altered_E3_Ligases: boolean (default: False)
+           If True, considers samples with mutated E3 ligases
+           If False, excludes any sample with a mutated E3 ligase 
+    
+    Returns
+    -------
+    subsets_muttype_dict_f: dict
+           Dictionary of the form {condition: dataframe}. Contains all the mutation type subsets selected.
     """
     
     # Dictionary to store mut type subsets of the stabch_levels table
@@ -509,6 +593,27 @@ def prepare_subsetsE3ligase_muttype_dict(stabch, conditions, E3, check_normality
 
 def prepare_subsetsDegron_muttype_dict(stabch, conditions, E3, gene, start, end, check_normality = True, Altered_E3_Ligases = False):
     """
+    Generates a dictionary of stability change dataframes separated by mutation type for a specific degron (i.e.:
+    degron found in a specific location of a protein).
+    
+    Parameters
+    ----------
+    stabch: pandas dataframe
+            Dataframe containing mutations and stability change levels of several proteins.
+    conditions: list
+            Conditions to extract from stabch.
+    cond: str
+           Condition to add to the dataframe in the "Condition" column
+    check_normality: boolean (default: True)
+           If True, performs a normality test over the data. Passed to process_muttype_df
+    Altered_E3_Ligases: boolean (default: False)
+           If True, considers samples with mutated E3 ligases
+           If False, excludes any sample with a mutated E3 ligase 
+    
+    Returns
+    -------
+    subsets_muttype_dict_f: dict
+           Dictionary of the form {condition: dataframe}. Contains all the mutation type subsets selected.
     """
     
     # Dictionary to store mut type subsets of the stabch_levels table
@@ -681,10 +786,27 @@ def prepare_subsetsDegron_muttype_dict(stabch, conditions, E3, gene, start, end,
 
     return subsets_muttype_dict_f
 
-def concat_subsets(subsets_dict, conditions, cols_for_drop, drop_duplicates = True,
-                            filter_wts = False):
+def concat_subsets(subsets_dict, conditions, cols_for_drop, drop_duplicates = True, filter_wts = False):
     """
-    To filter WT condition (e.g.: E3 ligase specific dfs)
+    Generates a unique dataframe of several mutation type conditions.
+    
+    Parameters
+    ----------
+    subsets_dict: dict
+           Dictionary of the form {condition: dataframe}. Contains all the mutation type subsets selected.
+    conditions: list
+            Conditions to include in the unique dataframe
+    cols_for_drop: list
+           Columns to consider for the drop step
+    drop_duplicates: boolean (default: True)
+           If True, drop duplicates
+    filter_wts: boolean (default: False)
+           If True, filters WTs to only keep those of the protein/s being analyzed
+    
+    Returns
+    -------
+    subsets_muttype_dict_f: dict
+           Dictionary of the form {condition: dataframe}. Contains all the mutation type subsets selected.
     """
     
     # Obtain needed mut type subsets
